@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>내 업무 플래너</title>
+    <meta name="description" content="개인 업무를 등록하고 마감일과 완료 상태를 체계적으로 관리하는 간결한 업무 플래너" />
+    <meta property="og:title" content="내 업무 플래너" />
+    <meta property="og:description" content="개인 업무를 등록하고 마감일과 완료 상태를 체계적으로 관리하는 간결한 업무 플래너" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      :root {
+        --color-bg: #f8fafc;
+        --color-surface: #ffffff;
+        --color-surface-subtle: #f1f5f9;
+        --color-border: #e2e8f0;
+        --color-border-hover: #cbd5e1;
+        --color-border-focus: #2563eb;
+        --color-text-main: #0f172a;
+        --color-text-body: #334155;
+        --color-text-muted: #64748b;
+        --color-text-sub: #94a3b8;
+        --color-primary: #2563eb;
+        --color-primary-hover: #1d4ed8;
+        --color-primary-light: #eff6ff;
+        --color-primary-border: #bfdbfe;
+        --color-danger: #dc2626;
+        --color-danger-light: #fef2f2;
+        --color-danger-border: #fecaca;
+        --color-warning: #b45309;
+        --color-warning-light: #fffbeb;
+        --color-warning-border: #fde68a;
+        --color-success: #15803d;
+        --color-success-light: #f0fdf4;
+        --color-success-border: #bbf7d0;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --radius-xl: 18px;
+        --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+        background-color: var(--color-bg);
+        color: var(--color-text-main);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 24px 16px 56px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+
+      /* 1. 상단 헤더 */
+      header {
+        margin-bottom: 20px;
+      }
+
+      .header-card {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 20px 22px;
+        box-shadow: var(--shadow-xs);
+      }
+
+      .header-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .title-group h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--color-text-main);
+        letter-spacing: -0.03em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .title-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+      }
+
+      .current-date {
+        font-size: 14px;
+        color: var(--color-text-muted);
+        margin-top: 5px;
+        font-weight: 500;
+      }
+
+      /* 저장 안내 배너 */
+      .storage-notice {
+        margin-top: 14px;
+        padding: 10px 14px;
+        background-color: var(--color-primary-light);
+        border: 1px solid var(--color-primary-border);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        color: #1e40af;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        line-height: 1.45;
+        word-break: keep-all;
+      }
+
+      .storage-notice svg {
+        flex-shrink: 0;
+        color: var(--color-primary);
+      }
+
+      /* 2. 상단 5대 요약 탭 카드 (전체, 진행 중, 오늘 마감, 기한 지남, 완료됨) */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background-color: var(--color-surface);
+        border: 1.5px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 12px 8px;
+        text-align: center;
+        box-shadow: var(--shadow-xs);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+
+      .stat-card:hover {
+        border-color: var(--color-border-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(15, 23, 42, 0.08);
+      }
+
+      .stat-card.active {
+        border-color: var(--color-primary);
+        background-color: #f0f7ff;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+      }
+
+      .stat-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--color-text-muted);
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+
+      .stat-card.active .stat-label {
+        color: var(--color-primary);
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--color-text-main);
+      }
+
+      .stat-value.primary {
+        color: var(--color-primary);
+      }
+
+      .stat-value.warning {
+        color: var(--color-warning);
+      }
+
+      .stat-value.danger {
+        color: var(--color-danger);
+      }
+
+      .stat-value.success {
+        color: var(--color-success);
+      }
+
+      /* 3. 새 업무 등록 카드 */
+      .section-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+        background-color: var(--color-primary-light);
+        border: 1px solid var(--color-primary-border);
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-bottom: 8px;
+      }
+
+      .card-register {
+        background: var(--color-surface);
+        border: 2px solid #dbeafe;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        margin-bottom: 30px;
+        padding: 24px;
+      }
+
+      .register-header {
+        margin-bottom: 18px;
+      }
+
+      .register-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--color-text-main);
+      }
+
+      .register-desc {
+        font-size: 13px;
+        color: var(--color-text-muted);
+        margin-top: 2px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--color-text-main);
+        margin-bottom: 7px;
+      }
+
+      .required-mark {
+        color: var(--color-danger);
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 15px;
+        border: 1.5px solid var(--color-border);
+        border-radius: var(--radius-md);
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        background-color: #ffffff;
+        color: var(--color-text-main);
+      }
+
+      .form-input:focus {
+        border-color: var(--color-border-focus);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+
+      .form-input.error {
+        border-color: var(--color-danger);
+        background-color: #fffaf0;
+      }
+
+      .error-message {
+        display: none;
+        font-size: 13px;
+        color: var(--color-danger);
+        margin-top: 6px;
+        font-weight: 600;
+      }
+
+      .error-message.active {
+        display: block;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .form-select {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 14px;
+        border: 1.5px solid var(--color-border);
+        border-radius: var(--radius-md);
+        outline: none;
+        background-color: #ffffff;
+        color: var(--color-text-main);
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+
+      .form-select:focus {
+        border-color: var(--color-border-focus);
+      }
+
+      .btn-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 13px 20px;
+        border-radius: var(--radius-md);
+        border: none;
+        cursor: pointer;
+        background-color: var(--color-primary);
+        color: #ffffff;
+        width: 100%;
+        min-height: 48px;
+        transition: background-color 0.15s, transform 0.05s;
+        user-select: none;
+      }
+
+      .btn-submit:hover {
+        background-color: var(--color-primary-hover);
+      }
+
+      .btn-submit:active {
+        transform: scale(0.99);
+      }
+
+      /* 4. 업무 목록 영역 */
+      .section-list {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        padding: 22px;
+        box-shadow: var(--shadow-card);
+      }
+
+      .list-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .list-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .list-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--color-text-main);
+      }
+
+      /* 5개 탭 바: 전체, 진행 중, 오늘 마감, 기한 지남, 완료 */
+      .filter-tabs {
+        display: inline-flex;
+        background-color: var(--color-surface-subtle);
+        padding: 4px;
+        border-radius: var(--radius-md);
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .filter-btn {
+        background: transparent;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 11px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--color-text-muted);
+        transition: all 0.15s ease;
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+
+      .filter-btn:hover {
+        color: var(--color-text-main);
+      }
+
+      .filter-btn.active {
+        background-color: var(--color-surface);
+        color: var(--color-primary);
+        font-weight: 700;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      }
+
+      .filter-btn[data-filter="pending"].active {
+        color: var(--color-primary);
+      }
+
+      .filter-btn[data-filter="today"].active {
+        color: #b45309;
+      }
+
+      .filter-btn[data-filter="overdue"].active {
+        color: #dc2626;
+      }
+
+      .tab-badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 10px;
+        background-color: #e2e8f0;
+        color: #475569;
+        line-height: 1.2;
+      }
+
+      .filter-btn.active .tab-badge {
+        background-color: var(--color-primary-light);
+        color: var(--color-primary);
+      }
+
+      .filter-btn[data-filter="today"] .tab-badge.has-count {
+        background-color: var(--color-warning-light);
+        color: #b45309;
+      }
+
+      .filter-btn[data-filter="overdue"] .tab-badge.has-count {
+        background-color: var(--color-danger-light);
+        color: #dc2626;
+      }
+
+      /* 5. 업무 목록 리스트 및 카드 */
+      .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .task-item {
+        background: var(--color-surface);
+        border: 1.5px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 16px 18px;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      }
+
+      .task-item:hover {
+        border-color: var(--color-border-hover);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .task-item.completed {
+        background-color: #f8fafc;
+        border-color: #e2e8f0;
+      }
+
+      .task-checkbox-wrapper {
+        padding-top: 2px;
+        flex-shrink: 0;
+      }
+
+      .custom-checkbox {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 22px;
+        height: 22px;
+        border: 2px solid #94a3b8;
+        border-radius: 6px;
+        outline: none;
+        cursor: pointer;
+        display: grid;
+        place-content: center;
+        transition: border-color 0.15s, background-color 0.15s;
+        margin: 0;
+        background-color: #ffffff;
+      }
+
+      .custom-checkbox:hover {
+        border-color: var(--color-primary);
+      }
+
+      .custom-checkbox:checked {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+      }
+
+      .custom-checkbox:checked::before {
+        content: "";
+        width: 10px;
+        height: 6px;
+        border-left: 2.2px solid white;
+        border-bottom: 2.2px solid white;
+        transform: rotate(-45deg) translate(1px, -1px);
+      }
+
+      .task-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .task-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--color-text-main);
+        word-break: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.55;
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+      }
+
+      .task-item.completed .task-title {
+        text-decoration: line-through;
+        text-decoration-thickness: 1.5px;
+        text-decoration-color: #94a3b8;
+        color: #94a3b8;
+      }
+
+      .task-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      /* 우선순위 뱃지 */
+      .badge-priority {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .badge-priority-high {
+        background-color: var(--color-danger-light);
+        color: var(--color-danger);
+        border: 1px solid var(--color-danger-border);
+      }
+
+      .badge-priority-medium {
+        background-color: var(--color-primary-light);
+        color: var(--color-primary);
+        border: 1px solid var(--color-primary-border);
+      }
+
+      .badge-priority-low {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+      }
+
+      .badge-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .badge-priority-high .badge-dot {
+        background-color: var(--color-danger);
+      }
+
+      .badge-priority-medium .badge-dot {
+        background-color: var(--color-primary);
+      }
+
+      .badge-priority-low .badge-dot {
+        background-color: #64748b;
+      }
+
+      /* 마감일 및 상태 배지 */
+      .badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .badge-due-overdue {
+        background-color: var(--color-danger-light);
+        color: var(--color-danger);
+        border: 1px solid var(--color-danger-border);
+        font-weight: 700;
+      }
+
+      .badge-due-today {
+        background-color: var(--color-warning-light);
+        color: var(--color-warning);
+        border: 1px solid var(--color-warning-border);
+        font-weight: 700;
+      }
+
+      .badge-due-future {
+        background-color: #f8fafc;
+        color: var(--color-text-body);
+        border: 1px solid var(--color-border);
+      }
+
+      .badge-due-none {
+        background-color: #f8fafc;
+        color: var(--color-text-sub);
+        border: 1px dashed var(--color-border);
+      }
+
+      .badge-completed {
+        background-color: var(--color-success-light);
+        color: var(--color-success);
+        border: 1px solid var(--color-success-border);
+        font-weight: 700;
+      }
+
+      /* 삭제 버튼 */
+      .btn-delete {
+        background: transparent;
+        border: none;
+        color: var(--color-text-sub);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s, background-color 0.15s;
+        flex-shrink: 0;
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      .btn-delete:hover {
+        color: var(--color-danger);
+        background-color: var(--color-danger-light);
+      }
+
+      /* 빈 목록 안내 (Empty State) */
+      .empty-state {
+        background-color: #fafbfc;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: var(--radius-lg);
+        padding: 48px 20px;
+        text-align: center;
+        color: var(--color-text-muted);
+        margin: 8px 0;
+      }
+
+      .empty-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        color: #94a3b8;
+      }
+
+      .empty-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--color-text-main);
+        margin-bottom: 4px;
+      }
+
+      .empty-desc {
+        font-size: 14px;
+        color: var(--color-text-muted);
+      }
+
+      /* 토스트 알림창 */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 12px 18px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 600;
+        color: #ffffff;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.25s, transform 0.25s;
+        z-index: 1000;
+        pointer-events: none;
+        max-width: 90vw;
+      }
+
+      .toast.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .toast.error {
+        background-color: #dc2626;
+      }
+
+      /* 모바일 반응형 */
+      @media (max-width: 640px) {
+        body {
+          padding: 16px 12px 40px;
+        }
+
+        .header-card {
+          padding: 16px 16px;
+        }
+
+        .title-group h1 {
+          font-size: 22px;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
+        }
+
+        .card-register {
+          padding: 18px 16px;
+          margin-bottom: 24px;
+        }
+
+        .form-row {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .section-list {
+          padding: 16px 14px;
+        }
+
+        .list-top-bar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
+        }
+
+        .filter-tabs {
+          display: flex;
+          width: 100%;
+          justify-content: flex-start;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-btn {
+          flex-shrink: 0;
+          padding: 6px 9px;
+          font-size: 12px;
+        }
+
+        .task-item {
+          padding: 14px 12px;
+          gap: 10px;
+        }
+
+        .task-title {
+          font-size: 15px;
+        }
+
+        .task-meta {
+          gap: 6px;
+        }
+
+        .badge-priority,
+        .badge-status {
+          font-size: 11px;
+          padding: 2px 7px;
+        }
+
+        .btn-delete {
+          padding: 4px;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stats-grid .stat-card:last-child {
+          grid-column: span 2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 1. 상단 헤더 -->
+      <header>
+        <div class="header-card">
+          <div class="header-main">
+            <div class="title-group">
+              <h1><span class="title-indicator"></span>내 업무 플래너</h1>
+              <div id="currentDateText" class="current-date">오늘 날짜 확인 중...</div>
+            </div>
+          </div>
+
+          <div class="storage-notice">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2"/>
+              <path d="M7 7h10"/>
+              <path d="M7 12h10"/>
+              <path d="M7 17h10"/>
+            </svg>
+            <span>이 브라우저에 저장되며 다른 기기와 자동 동기화되지 않습니다</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- 2. 상단 5대 요약 탭 카드 (클릭 시 해당 필터로 즉시 전환) -->
+      <div class="stats-grid" role="tablist" aria-label="업무 상태 요약 탭">
+        <div class="stat-card active" data-filter="all" role="tab" tabindex="0" title="전체 업무 보기">
+          <div class="stat-label">전체 업무</div>
+          <div id="statTotal" class="stat-value">0</div>
+        </div>
+        <div class="stat-card" data-filter="pending" role="tab" tabindex="0" title="진행 중 업무 보기">
+          <div class="stat-label">진행 중</div>
+          <div id="statPending" class="stat-value primary">0</div>
+        </div>
+        <div class="stat-card" data-filter="today" role="tab" tabindex="0" title="오늘 마감 업무 보기">
+          <div class="stat-label">오늘 마감</div>
+          <div id="statToday" class="stat-value warning">0</div>
+        </div>
+        <div class="stat-card" data-filter="overdue" role="tab" tabindex="0" title="기한 지남 업무 보기">
+          <div class="stat-label">기한 지남</div>
+          <div id="statOverdue" class="stat-value danger">0</div>
+        </div>
+        <div class="stat-card" data-filter="completed" role="tab" tabindex="0" title="완료된 업무 보기">
+          <div class="stat-label">완료됨</div>
+          <div id="statCompleted" class="stat-value success">0</div>
+        </div>
+      </div>
+
+      <!-- 3. 새 업무 등록 영역 -->
+      <section class="card-register" aria-labelledby="formHeading">
+        <div class="register-header">
+          <div class="section-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            입력 영역
+          </div>
+          <h2 id="formHeading" class="register-title">새 업무 등록</h2>
+          <p class="register-desc">개인 업무를 간편하게 등록하고 마감일과 우선순위를 설정하세요.</p>
+        </div>
+
+        <form id="taskForm" novalidate>
+          <div class="form-group">
+            <label for="taskTitle" class="form-label">업무명 <span class="required-mark">*</span></label>
+            <input
+              type="text"
+              id="taskTitle"
+              class="form-input"
+              placeholder="예: 프로젝트 기획안 초안 작성"
+              autocomplete="off"
+            />
+            <div id="titleError" class="error-message">업무명을 입력해 주세요 (공백만으로는 등록할 수 없습니다).</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="taskPriority" class="form-label">우선순위</label>
+              <select id="taskPriority" class="form-select">
+                <option value="medium" selected>보통 (기본)</option>
+                <option value="high">높음</option>
+                <option value="low">낮음</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="taskDueDate" class="form-label">마감일 (선택)</label>
+              <input type="date" id="taskDueDate" class="form-input" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btnSubmit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            업무 등록하기
+          </button>
+        </form>
+      </section>
+
+      <!-- 4. 업무 목록 영역 -->
+      <section class="section-list" aria-labelledby="listHeading">
+        <div class="list-top-bar">
+          <div class="list-title-wrap">
+            <h2 id="listHeading" class="list-title">업무 목록</h2>
+          </div>
+
+          <!-- 하단 필터 탭 바 (전체, 진행 중, 오늘 마감, 기한 지남, 완료) -->
+          <div class="filter-tabs" role="tablist">
+            <button type="button" class="filter-btn active" data-filter="all">
+              전체 <span id="badgeCountAll" class="tab-badge">0</span>
+            </button>
+            <button type="button" class="filter-btn" data-filter="pending">
+              진행 중 <span id="badgeCountPending" class="tab-badge">0</span>
+            </button>
+            <button type="button" class="filter-btn" data-filter="today">
+              오늘 마감 <span id="badgeCountToday" class="tab-badge">0</span>
+            </button>
+            <button type="button" class="filter-btn" data-filter="overdue">
+              기한 지남 <span id="badgeCountOverdue" class="tab-badge">0</span>
+            </button>
+            <button type="button" class="filter-btn" data-filter="completed">
+              완료 <span id="badgeCountCompleted" class="tab-badge">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 업무 리스트 -->
+        <div id="taskList" class="task-list">
+          <!-- 동적으로 생성됩니다 -->
+        </div>
+
+        <!-- 빈 상태 표시 -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <line x1="10" y1="14" x2="14" y2="14"></line>
+          </svg>
+          <div id="emptyTitle" class="empty-title">등록된 업무가 없습니다</div>
+          <div id="emptyDesc" class="empty-desc">위 입력창에서 새로운 업무를 등록해 보세요.</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 토스트 알림창 -->
+    <div id="toastMessage" class="toast error" role="status" aria-live="polite">
+      저장되지 않았습니다
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+
+        // 기존 localStorage 키 유지 (기존 저장 데이터 보존)
+        var STORAGE_KEY = 'my_work_planner_tasks_v1';
+
+        // 상태
+        var tasks = [];
+        var currentFilter = 'all';
+
+        // DOM 요소
+        var taskForm = document.getElementById('taskForm');
+        var taskTitleInput = document.getElementById('taskTitle');
+        var taskPrioritySelect = document.getElementById('taskPriority');
+        var taskDueDateInput = document.getElementById('taskDueDate');
+        var titleError = document.getElementById('titleError');
+        var taskListEl = document.getElementById('taskList');
+        var emptyStateEl = document.getElementById('emptyState');
+        var emptyTitleEl = document.getElementById('emptyTitle');
+        var emptyDescEl = document.getElementById('emptyDesc');
+        var statTotalEl = document.getElementById('statTotal');
+        var statPendingEl = document.getElementById('statPending');
+        var statTodayEl = document.getElementById('statToday');
+        var statOverdueEl = document.getElementById('statOverdue');
+        var statCompletedEl = document.getElementById('statCompleted');
+        var badgeCountAll = document.getElementById('badgeCountAll');
+        var badgeCountPending = document.getElementById('badgeCountPending');
+        var badgeCountToday = document.getElementById('badgeCountToday');
+        var badgeCountOverdue = document.getElementById('badgeCountOverdue');
+        var badgeCountCompleted = document.getElementById('badgeCountCompleted');
+        var currentDateTextEl = document.getElementById('currentDateText');
+        var toastEl = document.getElementById('toastMessage');
+        var filterBtns = document.querySelectorAll('.filter-btn');
+        var statCards = document.querySelectorAll('.stat-card');
+
+        var toastTimeout = null;
+
+        // 사용자 로컬 기준 오늘 날짜 문자열 반환 (YYYY-MM-DD)
+        function getLocalTodayString() {
+          var now = new Date();
+          var year = now.getFullYear();
+          var month = String(now.getMonth() + 1).padStart(2, '0');
+          var day = String(now.getDate()).padStart(2, '0');
+          return year + '-' + month + '-' + day;
+        }
+
+        // 한국어 오늘 날짜 표기 (헤더용)
+        function updateHeaderDate() {
+          var now = new Date();
+          var year = now.getFullYear();
+          var month = now.getMonth() + 1;
+          var date = now.getDate();
+          var dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+          var dayName = dayNames[now.getDay()];
+          currentDateTextEl.textContent = year + '년 ' + month + '월 ' + date + '일 ' + dayName;
+        }
+
+        // 토스트 알림 표시
+        function showToast(message, type) {
+          if (!toastEl) return;
+          toastEl.textContent = message;
+          toastEl.className = 'toast visible ' + (type || 'error');
+
+          if (toastTimeout) {
+            clearTimeout(toastTimeout);
+          }
+
+          toastTimeout = setTimeout(function () {
+            toastEl.className = 'toast ' + (type || 'error');
+          }, 3500);
+        }
+
+        // 고유 ID 생성
+        function generateUniqueId() {
+          return 'task_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+        }
+
+        // localStorage 저장 (등록/수정/완료/삭제 직후 호출)
+        function saveTasksToStorage() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            return true;
+          } catch (error) {
+            console.error('로컬 저장소 저장 실패:', error);
+            showToast('저장되지 않았습니다. 브라우저 저장공간이나 권한을 확인해주세요.', 'error');
+            return false;
+          }
+        }
+
+        // localStorage 로드 (기존 저장된 업무 불러오기)
+        function loadTasksFromStorage() {
+          try {
+            var stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+              var parsed = JSON.parse(stored);
+              if (Array.isArray(parsed)) {
+                tasks = parsed;
+              } else {
+                tasks = [];
+              }
+            } else {
+              tasks = [];
+            }
+          } catch (error) {
+            console.error('로컬 저장소 읽기 실패:', error);
+            showToast('저장된 업무를 불러오지 못했습니다.', 'error');
+            tasks = [];
+          }
+        }
+
+        // 우선순위 레이블 및 클래스 정의
+        var PRIORITY_CONFIG = {
+          high: { label: '높음', className: 'badge-priority-high' },
+          medium: { label: '보통', className: 'badge-priority-medium' },
+          low: { label: '낮음', className: 'badge-priority-low' }
+        };
+
+        // 마감일 상태 판별
+        function getDueDateBadge(task) {
+          if (!task.dueDate) {
+            return {
+              text: '마감일 없음',
+              className: 'badge-due-none'
+            };
+          }
+
+          var today = getLocalTodayString();
+          var dueDate = task.dueDate;
+
+          // 완료된 업무는 완료 배지만 적용 (기한 지남 표시 제외)
+          if (task.completed) {
+            return {
+              text: dueDate + ' 마감',
+              className: 'badge-due-future'
+            };
+          }
+
+          if (dueDate < today) {
+            return {
+              text: '기한 지남 (' + dueDate + ')',
+              className: 'badge-due-overdue'
+            };
+          } else if (dueDate === today) {
+            return {
+              text: '오늘 마감',
+              className: 'badge-due-today'
+            };
+          } else {
+            return {
+              text: dueDate + ' 마감',
+              className: 'badge-due-future'
+            };
+          }
+        }
+
+        // 요약 통계 및 탭별 개수 배지 업데이트
+        function updateStats() {
+          var today = getLocalTodayString();
+          var total = tasks.length;
+          var completed = 0;
+          var pending = 0;
+          var todayCount = 0;
+          var overdueCount = 0;
+
+          tasks.forEach(function (task) {
+            if (task.completed) {
+              completed++;
+            } else {
+              pending++;
+              if (task.dueDate === today) {
+                todayCount++;
+              } else if (task.dueDate && task.dueDate < today) {
+                overdueCount++;
+              }
+            }
+          });
+
+          // 상단 요약 카드 수치 업데이트
+          statTotalEl.textContent = total;
+          statPendingEl.textContent = pending;
+          statTodayEl.textContent = todayCount;
+          statOverdueEl.textContent = overdueCount;
+          statCompletedEl.textContent = completed;
+
+          // 하단 탭 내 개수 배지 업데이트
+          badgeCountAll.textContent = total;
+          badgeCountPending.textContent = pending;
+          badgeCountToday.textContent = todayCount;
+          badgeCountOverdue.textContent = overdueCount;
+          badgeCountCompleted.textContent = completed;
+
+          // 강조 배지 스타일 적용
+          if (todayCount > 0) {
+            badgeCountToday.classList.add('has-count');
+          } else {
+            badgeCountToday.classList.remove('has-count');
+          }
+
+          if (overdueCount > 0) {
+            badgeCountOverdue.classList.add('has-count');
+          } else {
+            badgeCountOverdue.classList.remove('has-count');
+          }
+
+          // 상단 통계 카드 활성화(active) 클래스 동기화
+          statCards.forEach(function (card) {
+            if (card.dataset.filter === currentFilter) {
+              card.classList.add('active');
+            } else {
+              card.classList.remove('active');
+            }
+          });
+
+          // 하단 탭 버튼 활성화(active) 클래스 동기화
+          filterBtns.forEach(function (btn) {
+            if (btn.dataset.filter === currentFilter) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+        }
+
+        // 필터 변경 공통 함수
+        function setFilter(newFilter) {
+          currentFilter = newFilter;
+          renderTasks();
+        }
+
+        // 목록 렌더링
+        function renderTasks() {
+          updateStats();
+          var today = getLocalTodayString();
+
+          // 선택된 조건에 맞게 필터링
+          var filtered = tasks.filter(function (task) {
+            if (currentFilter === 'pending') {
+              return !task.completed;
+            }
+            if (currentFilter === 'today') {
+              return !task.completed && task.dueDate === today;
+            }
+            if (currentFilter === 'overdue') {
+              return !task.completed && task.dueDate && task.dueDate < today;
+            }
+            if (currentFilter === 'completed') {
+              return task.completed;
+            }
+            return true;
+          });
+
+          taskListEl.innerHTML = '';
+
+          if (filtered.length === 0) {
+            emptyStateEl.style.display = 'block';
+            if (tasks.length === 0) {
+              emptyTitleEl.textContent = '등록된 업무가 없습니다';
+              emptyDescEl.textContent = '위 입력창에서 새로운 업무를 등록해 보세요.';
+            } else if (currentFilter === 'pending') {
+              emptyTitleEl.textContent = '진행 중인 업무가 없습니다';
+              emptyDescEl.textContent = '모든 업무가 완료되었거나 새로운 업무를 등록해 보세요.';
+            } else if (currentFilter === 'today') {
+              emptyTitleEl.textContent = '오늘 마감인 업무가 없습니다';
+              emptyDescEl.textContent = '오늘까지 처리해야 할 미완료 업무가 없습니다.';
+            } else if (currentFilter === 'overdue') {
+              emptyTitleEl.textContent = '기한이 지난 업무가 없습니다';
+              emptyDescEl.textContent = '모든 마감 기한을 잘 지키고 있습니다!';
+            } else if (currentFilter === 'completed') {
+              emptyTitleEl.textContent = '완료된 업무가 아직 없습니다';
+              emptyDescEl.textContent = '업무를 완수하고 체크박스를 눌러 완료해 보세요.';
+            } else {
+              emptyTitleEl.textContent = '해당 조건의 업무가 없습니다';
+              emptyDescEl.textContent = '';
+            }
+            return;
+          }
+
+          emptyStateEl.style.display = 'none';
+
+          filtered.forEach(function (task) {
+            var item = document.createElement('div');
+            item.className = 'task-item' + (task.completed ? ' completed' : '');
+            item.dataset.id = task.id;
+
+            var priority = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
+            var dueInfo = getDueDateBadge(task);
+
+            // 체크박스 (완료 상태 토글)
+            var checkboxWrapper = document.createElement('div');
+            checkboxWrapper.className = 'task-checkbox-wrapper';
+
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'custom-checkbox';
+            checkbox.checked = !!task.completed;
+            checkbox.setAttribute('aria-label', task.title + ' 완료 상태 토글');
+            checkbox.addEventListener('change', function () {
+              toggleTaskCompleted(task.id);
+            });
+            checkboxWrapper.appendChild(checkbox);
+
+            // 본문
+            var content = document.createElement('div');
+            content.className = 'task-content';
+
+            var title = document.createElement('div');
+            title.className = 'task-title';
+            title.textContent = task.title;
+
+            var meta = document.createElement('div');
+            meta.className = 'task-meta';
+
+            // 우선순위 배지
+            var priorityBadge = document.createElement('span');
+            priorityBadge.className = 'badge-priority ' + priority.className;
+            priorityBadge.innerHTML = '<span class="badge-dot"></span>' + priority.label;
+            meta.appendChild(priorityBadge);
+
+            // 마감일 배지
+            var dueBadge = document.createElement('span');
+            dueBadge.className = 'badge-status ' + dueInfo.className;
+            dueBadge.textContent = dueInfo.text;
+            meta.appendChild(dueBadge);
+
+            // 완료 상태 배지
+            if (task.completed) {
+              var completedBadge = document.createElement('span');
+              completedBadge.className = 'badge-status badge-completed';
+              completedBadge.textContent = '완료됨';
+              meta.appendChild(completedBadge);
+            }
+
+            content.appendChild(title);
+            content.appendChild(meta);
+
+            // 삭제 버튼
+            var deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-delete';
+            deleteBtn.setAttribute('aria-label', task.title + ' 삭제');
+            deleteBtn.title = '업무 삭제';
+            deleteBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+            deleteBtn.addEventListener('click', function () {
+              deleteTask(task.id);
+            });
+
+            item.appendChild(checkboxWrapper);
+            item.appendChild(content);
+            item.appendChild(deleteBtn);
+
+            taskListEl.appendChild(item);
+          });
+        }
+
+        // 업무 추가
+        function addTask(title, priority, dueDate) {
+          var trimmedTitle = title.trim();
+
+          // 유효성 검사: 공백만 있는 제목 방지 및 이유 안내
+          if (!trimmedTitle) {
+            taskTitleInput.classList.add('error');
+            titleError.classList.add('active');
+            taskTitleInput.focus();
+            return false;
+          }
+
+          var newTask = {
+            id: generateUniqueId(),
+            title: trimmedTitle,
+            priority: priority || 'medium',
+            dueDate: dueDate || '',
+            completed: false,
+            createdAt: new Date().toISOString()
+          };
+
+          tasks.unshift(newTask);
+
+          if (saveTasksToStorage()) {
+            taskTitleInput.value = '';
+            taskPrioritySelect.value = 'medium';
+            taskDueDateInput.value = '';
+            taskTitleInput.classList.remove('error');
+            titleError.classList.remove('active');
+            renderTasks();
+            return true;
+          }
+          return false;
+        }
+
+        // 업무 완료 토글
+        function toggleTaskCompleted(taskId) {
+          var found = false;
+          for (var i = 0; i < tasks.length; i++) {
+            if (tasks[i].id === taskId) {
+              tasks[i].completed = !tasks[i].completed;
+              found = true;
+              break;
+            }
+          }
+
+          if (found) {
+            saveTasksToStorage();
+            renderTasks();
+          }
+        }
+
+        // 선택한 업무만 삭제
+        function deleteTask(taskId) {
+          tasks = tasks.filter(function (task) {
+            return task.id !== taskId;
+          });
+          saveTasksToStorage();
+          renderTasks();
+        }
+
+        // 폼 제출 이벤트
+        taskForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          addTask(
+            taskTitleInput.value,
+            taskPrioritySelect.value,
+            taskDueDateInput.value
+          );
+        });
+
+        // 입력 시 에러 해제
+        taskTitleInput.addEventListener('input', function () {
+          if (taskTitleInput.value.trim().length > 0) {
+            taskTitleInput.classList.remove('error');
+            titleError.classList.remove('active');
+          }
+        });
+
+        // 상단 요약 카드 클릭 이벤트 (상단 카드도 즉시 탭 역할 수행)
+        statCards.forEach(function (card) {
+          card.addEventListener('click', function () {
+            var filter = card.dataset.filter || 'all';
+            setFilter(filter);
+          });
+          card.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              var filter = card.dataset.filter || 'all';
+              setFilter(filter);
+            }
+          });
+        });
+
+        // 하단 필터 탭 클릭 이벤트
+        filterBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var filter = btn.dataset.filter || 'all';
+            setFilter(filter);
+          });
+        });
+
+        // 초기화
+        updateHeaderDate();
+        loadTasksFromStorage();
+        renderTasks();
+      })();
+    </script>
+  </body>
+</html>
